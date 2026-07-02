@@ -1,0 +1,297 @@
+﻿diff --git a/lib/screens/citizen/citizen_dashboard.dart b/lib/screens/citizen/citizen_dashboard.dart
+index 962cbc6..79c9b2b 100644
+--- a/lib/screens/citizen/citizen_dashboard.dart
++++ b/lib/screens/citizen/citizen_dashboard.dart
+@@ -232,7 +232,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                 actions: [
+                   IconButton(
+                     icon: const Icon(Icons.notifications_active_rounded, color: AppColors.warning),
+-                    onPressed: () {},
++                    onPressed: () => context.push(AppRoutes.citizenNotifications),
+                   ),
+                   IconButton(
+                     icon: const Icon(Icons.person_outline_rounded),
+@@ -509,14 +509,42 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                   ],
+                 ),
+               ),
+-              Container(
+-                width: 56,
+-                height: 56,
+-                decoration: BoxDecoration(
+-                  color: Colors.white.withValues(alpha: 0.15),
+-                  shape: BoxShape.circle,
+-                ),
+-                child: const Icon(Icons.person_rounded, color: Colors.white, size: 30),
++              StreamBuilder<DocumentSnapshot>(
++                stream: FirebaseFirestore.instance.collection('citizen_profiles').doc(uid).snapshots(),
++                builder: (context, snapshot) {
++                  String? profileImageUrl;
++                  if (snapshot.hasData && snapshot.data!.exists) {
++                    final data = snapshot.data!.data() as Map<String, dynamic>?;
++                    if (data != null) {
++                      profileImageUrl = data['profileImageUrl'] as String?;
++                    }
++                  }
++                  
++                  ImageProvider? avatarProvider;
++                  if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
++                    if (profileImageUrl.startsWith('data:image')) {
++                      final base64Str = profileImageUrl.split(',').last;
++                      avatarProvider = MemoryImage(base64Decode(base64Str));
++                    } else {
++                      avatarProvider = NetworkImage(profileImageUrl);
++                    }
++                  }
++
++                  return Container(
++                    width: 56,
++                    height: 56,
++                    decoration: BoxDecoration(
++                      color: Colors.white.withValues(alpha: 0.15),
++                      shape: BoxShape.circle,
++                      image: avatarProvider != null 
++                          ? DecorationImage(image: avatarProvider, fit: BoxFit.cover)
++                          : null,
++                    ),
++                    child: avatarProvider == null 
++                        ? const Icon(Icons.person_rounded, color: Colors.white, size: 30)
++                        : null,
++                  );
++                },
+               ),
+             ],
+           ),
+@@ -1785,7 +1813,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                                 ? null
+                                 : () async {
+                                     if (!agreedPDPA) {
+-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda perlu bersetuju dengan Dasar Privasi & PDPA sebelum menghantar SOS.'.tr())));
++                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Anda perlu bersetuju dengan Dasar Privasi & PDPA sebelum menghantar SOS.'.tr())));
+                                       return;
+                                     }
+                                     setModalState(() {
+@@ -2304,26 +2332,26 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+               Marker(
+                 markerId: const MarkerId('shelter_1'),
+                 position: const LatLng(3.1550, 101.7100),
+-                infoWindow: const InfoWindow(title:'PPS Dewan Komuniti Ampang'.tr(), snippet: 'Kapasiti: 150/300 orang | Status: Aktif'),
++                infoWindow: InfoWindow(title:'PPS Dewan Komuniti Ampang'.tr(), snippet: 'Kapasiti: 150/300 orang | Status: Aktif'),
+                 icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+               ),
+               Marker(
+                 markerId: const MarkerId('shelter_2'),
+                 position: const LatLng(3.2000, 101.6800),
+-                infoWindow: const InfoWindow(title:'PPS SK Selayang'.tr(), snippet: 'Kapasiti: 80/200 orang | Status: Aktif'),
++                infoWindow: InfoWindow(title:'PPS SK Selayang'.tr(), snippet: 'Kapasiti: 80/200 orang | Status: Aktif'),
+                 icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+               ),
+               // Relief Trucks
+               Marker(
+                 markerId: const MarkerId('truck_1'),
+                 position: const LatLng(3.1450, 101.6950),
+-                infoWindow: const InfoWindow(title:'Trak Bantuan Makanan APM'.tr(), snippet: 'Status: Bergerak ke PPS Ampang'),
++                infoWindow: InfoWindow(title:'Trak Bantuan Makanan APM'.tr(), snippet: 'Status: Bergerak ke PPS Ampang'),
+                 icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+               ),
+               Marker(
+                 markerId: const MarkerId('truck_2'),
+                 position: const LatLng(3.1800, 101.6700),
+-                infoWindow: const InfoWindow(title:'Lori Logistik SIGAP'.tr(), snippet: 'Status: Mengedar selimut & khemah'),
++                infoWindow: InfoWindow(title:'Lori Logistik SIGAP'.tr(), snippet: 'Status: Mengedar selimut & khemah'),
+                 icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+               ),
+             };
+@@ -2642,13 +2670,13 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                     child: Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+-                        Text('Dewan Komuniti Ampang'.tr(), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
++                        Text('Dewan Serbaguna UTM Skudai'.tr(), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                         const SizedBox(height: 6),
+                         Row(
+                           children: [
+                             const Icon(Icons.location_on_rounded, size: 14, color: AppColors.textSecondary),
+                             const SizedBox(width: 6),
+-                            Text('1.2 km dari anda'.tr(), style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary)),
++                            Text('2.5 km dari anda'.tr(), style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary)),
+                           ],
+                         ),
+                       ],
+@@ -2674,7 +2702,12 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+               SizedBox(
+                 width: double.infinity,
+                 child: ElevatedButton.icon(
+-                  onPressed: () {},
++                  onPressed: () async {
++                    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=Dewan+Serbaguna+UTM+Skudai');
++                    if (await canLaunchUrl(url)) {
++                      await launchUrl(url);
++                    }
++                  },
+                   icon: const Icon(Icons.navigation_rounded, size: 18),
+                   label: Text('Navigasi Ke Pusat'.tr()),
+                   style: ElevatedButton.styleFrom(
+@@ -2741,12 +2774,14 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+             });
+ 
+             final docs = allDocs.where((doc) {
+-              if (_selectedClaimFilter == 'Semua') return true;
+               final status = (doc.data() as Map<String, dynamic>)['status'] as String? ?? '';
+-              if (_selectedClaimFilter == 'Dihantar' && status == 'submitted') return true;
+-              if (_selectedClaimFilter == 'Sedang Disemak' && status == 'under_review') return true;
+-              if (_selectedClaimFilter == 'Diluluskan' && status == 'approved') return true;
+-              if (_selectedClaimFilter == 'Ditolak' && status == 'rejected') return true;
++              if (status == 'cancelled') return false; // Hide self-cancelled claims
++              
++              if (_selectedClaimFilter == 'Semua') return true;
++              if (_selectedClaimFilter == 'Dihantar' && (status == 'submitted' || status.toLowerCase() == 'dihantar')) return true;
++              if (_selectedClaimFilter == 'Sedang Disemak' && (status == 'under_review' || status.toLowerCase() == 'sedang disemak')) return true;
++              if (_selectedClaimFilter == 'Diluluskan' && (status == 'approved' || status.toLowerCase() == 'diluluskan')) return true;
++              if (_selectedClaimFilter == 'Ditolak' && (status == 'rejected' || status.toLowerCase() == 'ditolak')) return true;
+               return false;
+             }).toList();
+ 
+@@ -3022,7 +3057,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                   children: [
+                     TextFormField(
+                       controller: icCtrl,
+-                      decoration: const InputDecoration(labelText:'No. Kad Pengenalan (IC)'.tr(), hintText:'xxxxxx-xx-xxxx'.tr()),
++                      decoration: InputDecoration(labelText:'No. Kad Pengenalan (IC)'.tr(), hintText:'xxxxxx-xx-xxxx'.tr()),
+                       keyboardType: TextInputType.number,
+                       validator: (value) => value == null || value.isEmpty ? 'Sila isi ruangan ini' : null,
+                       onChanged: (value) {
+@@ -3048,14 +3083,14 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                     const SizedBox(height: 12),
+                     TextFormField(
+                       controller: householdCtrl,
+-                      decoration: const InputDecoration(labelText:'Saiz Isi Rumah (Bilangan)'.tr()),
++                      decoration: InputDecoration(labelText:'Saiz Isi Rumah (Bilangan)'.tr()),
+                       keyboardType: TextInputType.number,
+                       validator: (value) => value == null || value.isEmpty ? 'Sila isi ruangan ini' : null,
+                     ),
+                     const SizedBox(height: 12),
+                     TextFormField(
+                       controller: typeCtrl,
+-                      decoration: const InputDecoration(labelText:'Jenis Bantuan (Cth: Makanan, Membaiki Rumah)'.tr()),
++                      decoration: InputDecoration(labelText:'Jenis Bantuan (Cth: Makanan, Membaiki Rumah)'.tr()),
+                       validator: (value) => value == null || value.isEmpty ? 'Sila isi ruangan ini' : null,
+                     ),
+                     const SizedBox(height: 12),
+@@ -3081,7 +3116,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                         return TextFormField(
+                           controller: textEditingController,
+                           focusNode: focusNode,
+-                          decoration: const InputDecoration(labelText:'Lokasi / Zon Bencana'.tr(), hintText:'Mula menaip untuk carian...'.tr()),
++                          decoration: InputDecoration(labelText:'Lokasi / Zon Bencana'.tr(), hintText:'Mula menaip untuk carian...'.tr()),
+                           validator: (value) => value == null || value.isEmpty ? 'Sila isi ruangan ini' : null,
+                         );
+                       },
+@@ -3089,7 +3124,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                     const SizedBox(height: 12),
+                     TextFormField(
+                       controller: damageCtrl,
+-                      decoration: const InputDecoration(labelText:'Keterangan Kerosakan'.tr()),
++                      decoration: InputDecoration(labelText:'Keterangan Kerosakan'.tr()),
+                       maxLines: 3,
+                       validator: (value) => value == null || value.isEmpty ? 'Sila isi ruangan ini' : null,
+                     ),
+@@ -3121,13 +3156,13 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                     const SizedBox(height: 16),
+                     TextFormField(
+                       controller: bankNameCtrl,
+-                      decoration: const InputDecoration(labelText:'Nama Bank (EFT BWI)'.tr(), hintText:'Cth: Maybank'.tr()),
++                      decoration: InputDecoration(labelText:'Nama Bank (EFT BWI)'.tr(), hintText:'Cth: Maybank'.tr()),
+                       validator: (value) => value == null || value.isEmpty ? 'Sila isi ruangan ini' : null,
+                     ),
+                     const SizedBox(height: 12),
+                     TextFormField(
+                       controller: bankAccCtrl,
+-                      decoration: const InputDecoration(labelText:'No. Akaun Bank'.tr()),
++                      decoration: InputDecoration(labelText:'No. Akaun Bank'.tr()),
+                       keyboardType: TextInputType.number,
+                       validator: (value) => value == null || value.isEmpty ? 'Sila isi ruangan ini' : null,
+                     ),
+@@ -3186,11 +3221,11 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                 onPressed: isUploading ? null : () async {
+                   if (!_formKey.currentState!.validate()) return;
+                   if (selectedImage == null) {
+-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sila muat naik gambar bukti.'.tr())));
++                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sila muat naik gambar bukti.'.tr())));
+                     return;
+                   }
+                   if (!agreedPDPA || !isKIR || !isTruthful) {
+-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sila tandakan semua kotak pengesahan dan persetujuan.'.tr())));
++                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sila tandakan semua kotak pengesahan dan persetujuan.'.tr())));
+                     return;
+                   }
+                   
+@@ -3202,7 +3237,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                     if (existingClaims.docs.isNotEmpty) {
+                       setState(() => isUploading = false);
+                       if (mounted) {
+-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombor IC ini telah mendaftar tuntutan. Hanya satu tuntutan dibenarkan per KIR.'.tr())));
++                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Nombor IC ini telah mendaftar tuntutan. Hanya satu tuntutan dibenarkan per KIR.'.tr())));
+                       }
+                       return;
+                     }
+@@ -3230,7 +3265,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+                       await _firestoreService.submitClaim(claim.toMap());
+                       if (mounted) Navigator.pop(ctx);
+                       if (mounted) {
+-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tuntutan berjaya dihantar.'.tr())));
++                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Tuntutan berjaya dihantar.'.tr())));
+                       }
+                     }
+                   } catch (e) {
+@@ -3597,7 +3632,36 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+     return Column(
+       crossAxisAlignment: CrossAxisAlignment.start,
+       children: [
+-        _buildSectionHeader('Notis Terkini', actionLabel: 'Lihat Semua', onAction: () {}),
++        _buildSectionHeader('Notis Terkini', actionLabel: 'Lihat Semua', onAction: () {
++          showModalBottomSheet(
++            context: context,
++            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
++            backgroundColor: AppColors.background,
++            builder: (ctx) => Padding(
++              padding: const EdgeInsets.all(24),
++              child: Column(
++                mainAxisSize: MainAxisSize.min,
++                crossAxisAlignment: CrossAxisAlignment.start,
++                children: [
++                  Text('Senarai Notis Terkini', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
++                  const SizedBox(height: 16),
++                  _alertItem('Jalan Ampang ditutup akibat air naik 1 meter.', AppColors.danger, '10 minit lalu'),
++                  _alertItem('Bekalan air di kawasan Gombak akan terputus jam 8 malam.', AppColors.warning, '30 minit lalu'),
++                  _alertItem('Pusat pemindahan Balairaya Cheras dibuka.', AppColors.primary, '1 jam lalu'),
++                  const SizedBox(height: 16),
++                  SizedBox(
++                    width: double.infinity,
++                    child: ElevatedButton(
++                      onPressed: () => Navigator.pop(ctx),
++                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
++                      child: const Text('Tutup', style: TextStyle(color: Colors.white)),
++                    ),
++                  ),
++                ],
++              ),
++            ),
++          );
++        }),
+         const SizedBox(height: 16),
+         _alertItem('Jalan Ampang ditutup akibat air naik 1 meter.', AppColors.danger, '10 minit lalu'),
+         _alertItem('Bekalan air di kawasan Gombak akan terputus jam 8 malam.', AppColors.warning, '30 minit lalu'),
+@@ -3661,9 +3725,10 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
+ 
+   Widget _toolkitCard(IconData icon, String title, Color color) {
+     return Container(
+-      width: 110,
++      width: 120,
++      height: 165,
+       margin: const EdgeInsets.only(right: 16),
+-      padding: const EdgeInsets.all(16),
++      padding: const EdgeInsets.all(12),
+       decoration: _cardDecoration(),
+       child: Column(
+         children: [

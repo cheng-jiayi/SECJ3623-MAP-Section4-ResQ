@@ -70,18 +70,15 @@ class _LoginScreenState extends State<LoginScreen> {
             final isLoading = state is AuthLoading;
 
             return SafeArea(
-              child: CustomScrollView(
-                slivers: [
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         _buildLogo(),
                         const SizedBox(height: 40),
                       _buildHeader(),
@@ -146,14 +143,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 40),
                       _buildFastLoginButtons(),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-        );
+            ),
+          );
           },
         ),
       ),

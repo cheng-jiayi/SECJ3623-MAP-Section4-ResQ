@@ -1,4 +1,5 @@
 # ⚡ SIGAP — Sistem Integrasi Gerak Awam Pantas
+
 <div align="center">
   <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
   <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" />
@@ -9,6 +10,32 @@
 <br/>
 
 **SIGAP** (meaning *"alert"* or *"fast"* in Malay) is a Flutter-based mobile crisis response and emergency coordination platform designed for Malaysia's disaster management (e.g., floods, fires, landslides, medical crises). It bridges the gap between **Citizens**, **Volunteers**, and **Government Agencies (e.g., NADMA, Bomba, PDRM)**, ensuring instant help and coordinate efforts when every second counts.
+
+> *"Every year, Malaysian floods don't just destroy homes—they destroy trust. SIGAP rebuilds that trust. We are building the operating system for Malaysia's disaster response."*
+
+---
+
+## 📌 The Problem & Solution
+
+### The Problem
+Malaysia faces recurring disasters (floods, landslides, haze) where:
+* **Citizens** feel lost and unable to signal for help.
+* **Volunteers** lack coordination, leading to duplicated efforts.
+* **Government Agencies** receive fragmented and delayed information.
+* **Aid & Donations** suffer from slow paperwork and lack of transparency.
+
+### The Solution
+A unified platform powered by **AWANIS**, an AI assistant that provides role-aware, bilingual (Bahasa Malaysia + English) guidance to all users, unifying real-time data and communication.
+
+---
+
+## 🤖 Meet AWANIS
+**Automated Welfare & Alert Navigation Intelligence System**
+
+AWANIS is the "calm, knowledgeable presence" within the app. Powered by the **Gemini API**, she provides:
+* **For Citizens:** Step-by-step survival guidance, SOS filing assistance, and relief claim explanations.
+* **For Volunteers:** Task summaries, incident briefings, and post-mission debriefing.
+* **For Officers:** Natural language queries of Firestore data (e.g., "How many SOS in Gombak?"), drafting situation reports, and resource reallocation suggestions.
 
 ---
 
@@ -33,25 +60,26 @@ graph TD
 
 ### 🏠 1. The Citizen Workflow
 * **SOS One-Tap Dispatch**: Instant emergency broadcast using geocoding to retrieve the citizen's current location, allowing them to report incident types (Flood, Fire, Medical, Missing Person).
-* **Malaysian Authority Routing**: Powered by [AuthorityRoutingService](file:///c:/Users/User/Downloads/SIGAP/lib/services/authority_routing_service.dart), SOS broadcasts automatically route to the corresponding emergency agency:
+* **Malaysian Authority Routing**: Powered by `AuthorityRoutingService`, SOS broadcasts automatically route to the corresponding emergency agency:
   * 🚒 **Bomba (994)**: Fire & structural rescue.
   * 🚑 **Ambulance (999)**: Accidents & critical medical events.
   * 👮 **PDRM (999)**: Crimes, missing persons, or public safety issues.
   * 🌊 **NADMA (03-8064 2400)**: Flood & landslide disaster zones.
-* **Active Flood Warnings (Amaran Banjir)**: Real-time pop-up banner alerting citizens of active flood warnings in their proximity, linking to crisis centers and evac directions.
-* **Family Safety Tracker (Keselamatan Keluarga)**: Real-time tracking of family members' safety status (*Safe, Evacuated, In Danger*).
-* **Donations & Transparent Claims**: Citizens can browse active donation campaigns, donate directly, view transparency reports, and download generated PDF receipts.
+* **Safety Status**: Mark yourself as "Safe," "Evacuated," or "Need Help" for family and responders. Active Flood Warnings alert citizens of active flood warnings in their proximity, linking to crisis centers and evac directions.
+* **Aid & Claims**: Submit and track relief aid claims (IC, household size, damage evidence) in real-time.
+* **Transparent Donations**: Browse active donation campaigns, donate directly via FPX/Credit Card, view transparency reports (food packs, medical supplies), and download generated PDF receipts.
+* **Offline Support**: Access cached emergency checklists and first aid guides via Flutter Hive.
 
 ### 🤝 2. The Volunteer Workflow
-* **Active/Inactive Status Toggle**: Controls the volunteer's availability for incoming emergency assignments in their area.
-* **Grab-Style Dispatch Queue**: Real-time incident feed of pending SOS dispatches. Volunteers can review incident details, location coordinates, and accept the mission.
+* **Active/Inactive Status Toggle**: Controls visibility and availability for incoming emergency assignments in their area.
+* **Grab-Style Dispatch Queue**: Real-time incident feed of pending SOS dispatches. Receive mission notifications with urgency scores, review incident details, location coordinates, and accept/decline with one tap.
 * **Interactive Mission Checklists**: Step-by-step guides for active rescue missions, detailing supplies to deliver, victims to evacuate, and field reports.
-* **SIGAP Mata & Rewards**: Earn points for completing volunteer missions, redeemable for certificates endorsed by civil defense organizations.
+* **SIGAP Mata & Rewards**: Earn points for completing volunteer missions, redeemable for certificates endorsed by civil defense organizations like NADMA or Bomba.
 
 ### 🏛️ 3. The Government Officer Workflow
-* **Command & Control Dashboard**: Centralized console showing live cluster distribution of SOS incidents and location mappings.
-* **Disaster Geofencing**: Define active disaster borders to restrict access or notify citizens in high-risk zones.
-* **Resource and Claim Operations**: Manage and approve relief aid claims submitted by affected citizens and track inventory distribution.
+* **Command & Control Dashboard**: Centralized console showing live cluster distribution (heatmap) of SOS incidents, location mappings, and volunteer movements.
+* **Disaster Geofencing**: Define active disaster borders to restrict access or declare disaster zones, triggering mass push alerts to citizens in high-risk zones.
+* **Resource & Claims Operations**: Manage and approve relief aid claims (in bulk) submitted by affected citizens and track inventory distribution (tents, boats, food) with low-stock alerts.
 
 ---
 
@@ -63,11 +91,15 @@ graph TD
 * **Routing**: `go_router` (v15.1.2) implementing declarative role-based routing.
 * **Localization**: `easy_localization` (v3.0.7) for complete, context-aware dual-language support (English & Bahasa Melayu).
 * **Offline Caching**: `hive_flutter` (v1.1.0) local storage cache for backup guides and safety checklists.
+* **Maps**: Google Maps Flutter Plugin
 
-### Cloud Integration (Firebase)
-* **Firebase Auth**: Role-Based Access Control (RBAC) securely restricting and onboarding Citizens, Volunteers, and Officers. Includes re-authentication workflows for password changes.
+### Backend & Cloud Integration (Firebase)
+* **Firebase Auth**: Role-Based Access Control (RBAC) securely restricting and onboarding Citizens, Volunteers, and Officers. Includes re-authentication workflows.
 * **Cloud Firestore**: Real-time synchronization of SOS signals, user profiles, volunteer statuses, and donation transactions.
+* **Firebase Storage**: For media and file uploads.
 * **Firebase Messaging (FCM)**: Push notifications for immediate dispatch warnings.
+* **AI Chat**: Gemini API / Claude API via Firebase Cloud Functions.
+* **Payments**: Stripe / iPay88 (FPX Support).
 
 ---
 
@@ -165,6 +197,22 @@ All shared widgets are housed under `lib/widgets/` to ensure a consistent, premi
 | `SigapButton` | Loading indicator support, Primary / Outlined styles | Submit actions, accepts, declines |
 | `SigapAppBar` | Modern glassmorphism look, title routing, localization-ready | Core navigation bar across all roles |
 | `LoadingOverlay` | Full-screen blocking loader with subtle blur | Secure network and authentication barriers |
+
+---
+
+## 📅 Roadmap (Sprint Breakdown)
+1. **Sprint 1:** Authentication & Role-based UI personalization.
+2. **Sprint 2:** Core Crisis CRUD (SOS submission, Live Map, Safety Updates).
+3. **Sprint 3:** Claims processing, Donation campaigns, and Volunteer dispatch.
+4. **Sprint 4:** AWANIS AI integration, FAQ module, and Points system.
+
+---
+
+## 💰 Business Model
+* **SaaS:** Licensing for NADMA, Civil Defence, and Local Councils (RM 50k-200k/year).
+* **Sponsorship:** Telco CSR funding (Maxis, Celcom, Digi).
+* **Donation Fee:** Transparent 2-3% platform fee for maintenance.
+* **Premium Tier:** Corporate CSR team management tools.
 
 ---
 

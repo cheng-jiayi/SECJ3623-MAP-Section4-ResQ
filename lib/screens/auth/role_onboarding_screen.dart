@@ -30,7 +30,7 @@ class _RoleOnboardingScreenState extends State<RoleOnboardingScreen> {
             'availabilityStart': '08:00',
             'availabilityEnd': '18:00',
             'isActive': false,
-            'sigapMataPoints': 0,
+            'sigapMataPoints': 1250,
             'certifications': <String>[],
           }).timeout(const Duration(seconds: 30));
           break;

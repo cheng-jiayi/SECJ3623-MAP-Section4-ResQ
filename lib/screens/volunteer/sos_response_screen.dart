@@ -114,7 +114,7 @@ class _SosResponseScreenState extends State<SosResponseScreen> {
             .doc(widget.sosDocId)
             .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return const Center(
                 child: CircularProgressIndicator(
                     color: AppColors.volunteerAccent));
@@ -972,17 +972,74 @@ class _SosResponseScreenState extends State<SosResponseScreen> {
                 onPressed: _isTogglingBackup
                     ? null
                     : () async {
+                        final bool requesting = !report.needBackup;
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            title: Row(
+                              children: [
+                                Icon(
+                                  requesting ? Icons.warning_amber_rounded : Icons.cancel_rounded,
+                                  color: requesting ? AppColors.danger : AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    requesting ? 'Minta Bantuan Tambahan?'.tr() : 'Batal Permintaan Bantuan?'.tr(),
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 15),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            content: Text(
+                              requesting
+                                  ? 'Pegawai kawalan dan sukarelawan lain akan dimaklumkan bahawa anda memerlukan bantuan tambahan di lokasi ini. Teruskan?'.tr()
+                                  : 'Permintaan bantuan tambahan akan dibatalkan. Teruskan?'.tr(),
+                              style: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondary),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: Text('Tidak'.tr(), style: TextStyle(color: AppColors.textSecondary)),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: requesting ? AppColors.danger : AppColors.textSecondary,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: Text(requesting ? 'Ya, Minta Bantuan'.tr() : 'Ya, Batalkan'.tr()),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm != true) return;
                         setState(() => _isTogglingBackup = true);
                         try {
                           await _firestoreService.updateSOSReportBackupRequest(
-                              report.id, !report.needBackup);
+                              report.id, requesting);
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(!report.needBackup
-                                    ? AppStrings.volunteerPermintaanBantuanTambahanDihantar
-                                    : AppStrings.volunteerPermintaanBantuanTambahanDibatalkan),
-                                backgroundColor: !report.needBackup ? AppColors.danger : AppColors.safe,
+                                content: Row(
+                                  children: [
+                                    Icon(
+                                      requesting ? Icons.warning_rounded : Icons.check_circle_rounded,
+                                      color: Colors.white, size: 18,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(requesting
+                                          ? '✅ Permintaan bantuan tambahan dihantar kepada Pegawai Kawalan!'.tr()
+                                          : 'Permintaan bantuan tambahan telah dibatalkan.'.tr()),
+                                    ),
+                                  ],
+                                ),
+                                backgroundColor: requesting ? AppColors.danger : AppColors.safe,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                duration: const Duration(seconds: 4),
                               ),
                             );
                           }
@@ -1007,10 +1064,12 @@ class _SosResponseScreenState extends State<SosResponseScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: Text(
-                  report.needBackup ? 'Batal'.tr() : 'Minta'.tr(),
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-                ),
+                child: _isTogglingBackup
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(
+                        report.needBackup ? 'Batal'.tr() : 'Minta'.tr(),
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
               ),
             ],
           ),
@@ -1161,8 +1220,27 @@ class _SosResponseScreenState extends State<SosResponseScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  _showCallingSimulationOverlay(context, report.reporterName);
+                onPressed: () async {
+                  if (report.reporterPhone.isEmpty) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Nombor telefon mangsa tidak tersedia.'.tr()),
+                          backgroundColor: AppColors.danger,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                  final Uri phoneUri = Uri.parse('tel:${report.reporterPhone}');
+                  if (await canLaunchUrl(phoneUri)) {
+                    await launchUrl(phoneUri);
+                  } else {
+                    // Fallback: show simulation overlay for emulator testing
+                    if (mounted) {
+                      _showCallingSimulationOverlay(context, report.reporterName);
+                    }
+                  }
                 },
                 icon: const Icon(Icons.phone_rounded, size: 16),
                 label: Text(AppStrings.volunteerPanggilTelefonMangsa),

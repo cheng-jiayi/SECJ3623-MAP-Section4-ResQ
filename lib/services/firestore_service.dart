@@ -107,7 +107,7 @@ class FirestoreService {
     await _db.collection('volunteer_profiles').doc(uid).set({
       ...data,
       'uid': uid,
-      'sigapMataPoints': 0,
+      'sigapMataPoints': 1250,
       'isActive': false,
     }, SetOptions(merge: true));
     await updateUserDocument(uid, {'profileComplete': true});
@@ -332,6 +332,16 @@ class FirestoreService {
         .snapshots();
   }
 
+  /// Check if a citizen already has an active or responded SOS report.
+  Future<bool> hasActiveSOS(String uid) async {
+    final snapshot = await _db
+        .collection('sos_reports')
+        .where('reporterId', isEqualTo: uid)
+        .where('status', whereIn: ['active', 'responded'])
+        .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
   /// Request backup/reinforcements for a specific SOS report.
   Future<void> updateSOSReportBackupRequest(
       String docId, bool needBackup) async {
@@ -355,7 +365,7 @@ class FirestoreService {
 
     if (reporterId != null) {
       await _db.collection('citizen_profiles').doc(reporterId).set({
-        'safetyStatus': 'Berpindah',
+        'safetyStatus': 'Selamat',
       }, SetOptions(merge: true));
     }
   }
@@ -775,5 +785,40 @@ class FirestoreService {
       'sigapMataPoints': FieldValue.increment(points),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  // ── Certificates ─────────────────────────────────────────────────────────
+
+  Future<void> redeemCertificate(String uid, String certTitle, int costPoints) async {
+    final profileRef = _db.collection('volunteer_profiles').doc(uid);
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(profileRef);
+      if (!snapshot.exists) throw Exception("Profile does not exist!");
+      final currentPoints = snapshot.data()?['sigapMataPoints'] as int? ?? 0;
+      if (currentPoints < costPoints) {
+        throw Exception("Mata tidak mencukupi untuk menebus sijil ini.");
+      }
+      
+      transaction.update(profileRef, {
+        'sigapMataPoints': currentPoints - costPoints,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      final certRef = profileRef.collection('certificates').doc();
+      transaction.set(certRef, {
+        'id': certRef.id,
+        'title': certTitle,
+        'redeemedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Stream<QuerySnapshot> streamVolunteerCertificates(String uid) {
+    return _db
+        .collection('volunteer_profiles')
+        .doc(uid)
+        .collection('certificates')
+        .orderBy('redeemedAt', descending: true)
+        .snapshots();
   }
 }

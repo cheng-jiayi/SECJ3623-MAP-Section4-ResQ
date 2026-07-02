@@ -25,7 +25,7 @@ import '../../services/authority_routing_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/awanis_service.dart';
 import '../../services/pdf_report_service.dart';
-import '../citizen/faq_screen.dart';
+import 'officer_faq_screen.dart';
 
 import '../../widgets/common/sigap_app_bar.dart';
 
@@ -331,8 +331,7 @@ class _OfficerDashboardState extends State<OfficerDashboard> {
         const SizedBox(height: 24),
         _sectionTitle('Soalan Lazim (FAQ)'.tr()),
         const SizedBox(height: 12),
-        _faqCard('Panduan Pengisytiharan Darurat'.tr()),
-        _faqCard('Prosedur Penugasan Sukarelawan'.tr()),
+        _faqCard('Panduan & FAQ Pegawai'.tr()),
         const SizedBox(height: 80),
       ],
     );
@@ -368,8 +367,7 @@ class _OfficerDashboardState extends State<OfficerDashboard> {
 
   Widget _faqCard(String title) {
     return InkWell(
-      onTap: () => Navigator.push(
-          context, MaterialPageRoute(builder: (_) => const FAQScreen())),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OfficerFAQScreen())),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -2878,6 +2876,9 @@ class _OfficerDashboardState extends State<OfficerDashboard> {
               Expanded(
                 child: TextField(
                   controller: _awanisMsgCtrl,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.send,
                   decoration: InputDecoration(
                     hintText:
                         'Tanya AWANIS (cth: Berapa SOS hari ini?)...'.tr(),
@@ -3006,36 +3007,28 @@ class _OfficerDashboardState extends State<OfficerDashboard> {
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600)),
               ),
-              ElevatedButton.icon(
+              TextButton.icon(
                 onPressed: () async {
-                  final bytes = await PdfReportService.generateReportPdf(
-                      report, 'Laporan Insiden AI'.tr());
-                  await PdfReportService.shareReport(
-                      bytes, 'Laporan_Insiden_AI.pdf');
+                  final file = await PdfReportService.generateReportPdf(report, 'Laporan Insiden AI'.tr());
+                  await PdfReportService.shareReport(file);
                 },
                 icon: const Icon(Icons.share_rounded, size: 16),
                 label: Text('Kongsi'.tr()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
-              ElevatedButton.icon(
+              TextButton.icon(
                 onPressed: () async {
-                  final bytes = await PdfReportService.generateReportPdf(
-                      report, 'Laporan Insiden AI'.tr());
-                  await PdfReportService.downloadReport(
-                      bytes, 'Laporan_Insiden_AI.pdf');
+                  final file = await PdfReportService.generateReportPdf(report, 'Laporan Insiden AI'.tr());
+                  await PdfReportService.downloadReport(file);
                 },
                 icon: const Icon(Icons.download_rounded, size: 16),
                 label: Text('Muat Turun'.tr()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.safe,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.safe,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
             ],

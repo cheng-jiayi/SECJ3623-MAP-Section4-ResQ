@@ -29,6 +29,7 @@ import 'donation_campaigns_screen.dart';
 import 'offline_guide_screen.dart';
 import 'faq_screen.dart';
 import 'awanis_chat_screen.dart';
+import 'emergency_bag_screen.dart';
 import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -266,7 +267,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
                 ],
               ),
               body: _buildBody(uid, name),
-              floatingActionButton: isKeyboardOpen ? null : _buildSOSFab(),
+              floatingActionButton: isKeyboardOpen ? null : _buildSOSFab(uid),
               floatingActionButtonLocation: isKeyboardOpen
                   ? null
                   : FloatingActionButtonLocation.centerDocked,
@@ -419,7 +420,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
     );
   }
 
-  Widget _buildSOSFab() {
+  Widget _buildSOSFab(String uid) {
     return Container(
       margin: const EdgeInsets.only(top: 30),
       decoration: BoxDecoration(
@@ -433,7 +434,37 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () {
+        onPressed: () async {
+          if (uid.isEmpty) return;
+          final hasActive = await _firestoreService.hasActiveSOS(uid);
+          if (hasActive) {
+            if (mounted) {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+                      const SizedBox(width: 8),
+                      Text('SOS Sedang Aktif'.tr(), style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16)),
+                    ],
+                  ),
+                  content: Text(
+                    'Anda sudah mempunyai laporan SOS yang sedang aktif. Sila batalkan laporan sedia ada sebelum membuat laporan baharu.'.tr(),
+                    style: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text('Tutup'.tr(), style: TextStyle(color: AppColors.textSecondary)),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return;
+          }
           _showSOSTypeDialog(context);
         },
         backgroundColor: AppColors.danger,
@@ -2583,8 +2614,10 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: () => _confirmCancelSOS(
-                            doc.id, data['type'] as String? ?? 'SOS'),
+                        onTap: () {
+                          Navigator.pop(context); // Pop the SOS Type Dialog first
+                          _confirmCancelSOS(doc.id, data['type'] as String? ?? 'SOS');
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 4),
@@ -2675,6 +2708,9 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
                       : 'Penggera palsu / Situasi terkawal'.tr(),
                 );
                 if (mounted) {
+                  setState(() {
+                    _isSirenActive = false;
+                  });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('SOS berjaya dibatalkan.'.tr()),
@@ -4528,8 +4564,10 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
                 child: _toolkitCard(Icons.help_center_rounded,
                     'Pusat Bantuan / FAQ'.tr(), Colors.blue),
               ),
-              _toolkitCard(
-                  Icons.backpack_rounded, 'Beg Kecemasan'.tr(), Colors.green),
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EmergencyBagScreen())),
+                child: _toolkitCard(Icons.backpack_rounded, 'Beg Kecemasan'.tr(), Colors.green),
+              ),
             ],
           ),
         )
