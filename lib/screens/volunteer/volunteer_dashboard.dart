@@ -1645,6 +1645,9 @@ Widget _buildFakePastMissionCard(String title, String location, String date, Str
     final checklistMap = report.volunteerChecklist ?? {};
     final checkedCount = checklistMap.values.where((v) => v == true).length;
     final double progress = checkedCount / 5.0;
+    final isCompleted = report.status == 'resolved' ||
+        report.status == 'completed' ||
+        report.status == SosReportModel.statusResolved;
 
     return GestureDetector(
       onTap: () => context.push('/volunteer/sos-response', extra: report.id),
@@ -1839,97 +1842,99 @@ Widget _buildFakePastMissionCard(String title, String location, String date, Str
                     ],
                   ),
                   
-                  const SizedBox(height: 16),
-                  const Divider(height: 1),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      // "Tiba di Lokasi" button (only if not checked)
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            final checklist = Map<String, dynamic>.from(report.volunteerChecklist ?? {});
-                            checklist[AppStrings.volunteerPeralatanKecemasanLengkapFirst] = true;
-                            checklist[AppStrings.volunteerDalamPerjalananKeLokasi] = true;
-                            checklist[AppStrings.volunteerTibaDiLokasiInsiden] = true;
-                            
-                            try {
-                              await _firestoreService.updateSOSChecklist(report.id, checklist);
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Status dikemaskini: Tiba di lokasi'.tr()),
-                                    backgroundColor: AppColors.safe,
-                                  ),
-                                );
+                  if (!isCompleted) ...[
+                    const SizedBox(height: 16),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        // "Tiba di Lokasi" button (only if not checked)
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final checklist = Map<String, dynamic>.from(report.volunteerChecklist ?? {});
+                              checklist[AppStrings.volunteerPeralatanKecemasanLengkapFirst] = true;
+                              checklist[AppStrings.volunteerDalamPerjalananKeLokasi] = true;
+                              checklist[AppStrings.volunteerTibaDiLokasiInsiden] = true;
+                              
+                              try {
+                                await _firestoreService.updateSOSChecklist(report.id, checklist);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Status dikemaskini: Tiba di lokasi'.tr()),
+                                      backgroundColor: AppColors.safe,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Gagal kemaskini status: $e'.tr()),
+                                      backgroundColor: AppColors.danger,
+                                    ),
+                                  );
+                                }
                               }
-                            } catch (e) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Gagal kemaskini status: $e'.tr()),
-                                    backgroundColor: AppColors.danger,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.location_on_rounded, size: 16),
-                          label: Text(
-                            'Tiba'.tr(),
-                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            foregroundColor: AppColors.volunteerAccent,
-                            side: const BorderSide(color: AppColors.volunteerAccent),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            },
+                            icon: const Icon(Icons.location_on_rounded, size: 16),
+                            label: Text(
+                              'Tiba'.tr(),
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              foregroundColor: AppColors.volunteerAccent,
+                              side: const BorderSide(color: AppColors.volunteerAccent),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // "Senarai Semak" button
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            context.push(AppRoutes.missionChecklist, extra: report.id);
-                          },
-                          icon: const Icon(Icons.checklist_rounded, size: 16),
-                          label: Text(
-                            'Semak'.tr(),
-                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            foregroundColor: Colors.purple,
-                            side: const BorderSide(color: Colors.purple),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // "Selesai" button
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            context.push(AppRoutes.missionCompletion, extra: report.id);
-                          },
-                          icon: const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
-                          label: Text(
-                            'Selesai'.tr(),
-                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.safe,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        const SizedBox(width: 8),
+                        // "Senarai Semak" button
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              context.push(AppRoutes.missionChecklist, extra: report.id);
+                            },
+                            icon: const Icon(Icons.checklist_rounded, size: 16),
+                            label: Text(
+                              'Semak'.tr(),
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              foregroundColor: Colors.purple,
+                              side: const BorderSide(color: Colors.purple),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 8),
+                        // "Selesai" button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              context.push(AppRoutes.missionCompletion, extra: report.id);
+                            },
+                            icon: const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
+                            label: Text(
+                              'Selesai'.tr(),
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.safe,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
