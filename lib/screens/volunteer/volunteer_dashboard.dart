@@ -1642,9 +1642,6 @@ Widget _buildFakePastMissionCard(String title, String location, String date, Str
         urgencyColor = const Color(0xFF22C55E);
     }
 
-    final checklistMap = report.volunteerChecklist ?? {};
-    final checkedCount = checklistMap.values.where((v) => v == true).length;
-    final double progress = checkedCount / 5.0;
     final isCompleted = report.status == 'resolved' ||
         report.status == 'completed' ||
         report.status == SosReportModel.statusResolved;
@@ -1803,44 +1800,6 @@ Widget _buildFakePastMissionCard(String title, String location, String date, Str
                   ),
                   
                   const SizedBox(height: 16),
-                  
-                  // Progress indicator
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Kemajuan Misi'.tr(),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          Text(
-                            '${(progress * 100).round()}%',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: urgencyColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 6,
-                          backgroundColor: Colors.grey[200],
-                          color: urgencyColor,
-                        ),
-                      ),
-                    ],
-                  ),
                   
                   if (!isCompleted) ...[
                     const SizedBox(height: 16),
